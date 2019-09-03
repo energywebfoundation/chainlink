@@ -152,6 +152,7 @@ func (ht *HeadTracker) onNewHead(head *models.Head) {
 	defer ht.headMutex.Unlock()
 
 	for _, trackable := range ht.callbacks {
+		fmt.Println("$$$$$$$$$", head)
 		trackable.OnNewHead(head)
 	}
 }

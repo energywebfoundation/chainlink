@@ -257,7 +257,7 @@ func TestIntegration_RunAt(t *testing.T) {
 	eth.Register("eth_chainId", app.Store.Config.ChainID())
 	app.InstantClock()
 
-	j := cltest.FixtureCreateJobViaWeb(t, app, "fixtures/web/run_at_job.json")
+	j := cltest.FixtureCreateJobViaWeb(t, app, "testdata/run_at_noop_job.json")
 
 	initr := j.Initiators[0]
 	assert.Equal(t, models.InitiatorRunAt, initr.Type)
@@ -754,32 +754,63 @@ func TestIntegration_CreateServiceAgreement(t *testing.T) {
 }
 
 func TestIntegration_SyncJobRuns(t *testing.T) {
-	t.Parallel()
 	wsserver, wsserverCleanup := cltest.NewEventWebSocketServer(t)
 	defer wsserverCleanup()
 
 	config, _ := cltest.NewConfig(t)
 	config.Set("EXPLORER_URL", wsserver.URL.String())
-	app, cleanup := cltest.NewApplicationWithConfig(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 	defer cleanup()
+
+	newHeads := make(chan models.BlockHeader)
+	sentAt := uint64(23456)
+	safe := sentAt + 1 + config.MinOutgoingConfirmations()
+	txHash := cltest.NewHash()
+	confirmedReceipt := models.TxReceipt{
+		Hash:        txHash,
+		BlockNumber: cltest.Int(sentAt),
+	}
+
 	eth := app.MockEthClient(cltest.Strict)
+	eth.RegisterSubscription("newHeads", newHeads)
 	eth.Register("eth_chainId", config.ChainID())
+	eth.Register("eth_getTransactionCount", `0x0100`)
+	eth.Register("eth_blockNumber", utils.Uint64ToHex(sentAt))
+	eth.Register("eth_sendRawTransaction", txHash)
+	eth.Register("eth_getTransactionReceipt", confirmedReceipt)
+	eth.Register("eth_blockNumber", utils.Uint64ToHex(safe))
+	eth.Register("eth_getTransactionReceipt", confirmedReceipt)
+	eth.Register("eth_getBalance", "0x0100")
+	eth.Register("eth_call", "0x0100")
 
 	app.InstantClock()
 
 	app.Store.StatsPusher.Period = 300 * time.Millisecond
 
 	app.Start()
-	j := cltest.FixtureCreateJobViaWeb(t, app, "fixtures/web/run_at_job.json")
+	j := cltest.FixtureCreateJobViaWeb(t, app, "testdata/run_at_job.json")
+	jrs := cltest.WaitForRuns(t, j, app.Store, 1)
+	jr := jrs[0]
+	newHeads <- models.BlockHeader{Number: cltest.BigHexInt(safe)} // 23465
+	time.Sleep(time.Second)
 
 	cltest.CallbackOrTimeout(t, "stats pusher connects", func() {
 		<-wsserver.Connected
 	}, 5*time.Second)
 
 	var message string
-	cltest.CallbackOrTimeout(t, "stats pusher sends", func() {
-		message = <-wsserver.Received
-	}, 5*time.Second)
+
+	newHeads <- models.BlockHeader{Number: cltest.BigHexInt(safe + 1)} // 23465
+
+	go func() {
+		cltest.CallbackOrTimeout(t, "stats pusher sends", func() {
+			message = <-wsserver.Received
+			message = <-wsserver.Received
+			message = <-wsserver.Received
+		}, 5*time.Second)
+		fmt.Println("!!!!!!!!!", message)
+	}()
+	cltest.WaitForJobRunToComplete(t, app.Store, jr)
 
 	var run models.JobRun
 	err := json.Unmarshal([]byte(message), &run)

@@ -142,6 +142,7 @@ func createTxRunResult(
 }
 
 func ensureTxRunResult(input *models.RunResult, str *strpkg.Store) {
+	fmt.Println("!!!!!!!!!! here")
 	val, err := input.ResultString()
 	if err != nil {
 		input.SetError(err)
