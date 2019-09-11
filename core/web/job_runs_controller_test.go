@@ -184,7 +184,7 @@ func TestJobRunsController_Create_ExternalInitiator_Success(t *testing.T) {
 	eia := models.NewExternalInitiatorAuthentication()
 	eir := &models.ExternalInitiatorRequest{
 		Name: "bitcoin",
-		URL:  cltest.WebURL(t, "http://localhost:8888"),
+		URL:  cltest.WebURL(t, "http://does.not.exist"),
 	}
 	ei, err := models.NewExternalInitiator(eia, eir)
 	require.NoError(t, err)
