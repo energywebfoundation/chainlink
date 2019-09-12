@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 import "./MaliciousChainlink.sol";
 import "../ChainlinkClient.sol";

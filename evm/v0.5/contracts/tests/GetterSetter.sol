@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 // GetterSetter is a contract to aid debugging and testing during development.
 contract GetterSetter {
