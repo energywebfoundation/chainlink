@@ -33,5 +33,14 @@ else
   launch_gethnet
 fi
 
+export CHAINLINK_DEV=true
 launch_chainlink
 deploy_v05_contracts
+
+heading 'Running tests...'
+pushd integration >/dev/null
+
+./coordinator_test
+
+title 'All tests passed.'
+popd >/dev/null
