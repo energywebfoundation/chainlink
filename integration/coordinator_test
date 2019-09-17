@@ -9,4 +9,5 @@ if ! [ -x "$(command -v jq)" ]; then
   exit 1
 fi
 
-agreement_response=$(chainlink -j agreements create  $SRCROOT/integration/agreement.json)
+# XXX: For the final version, this should be "chainlink", not cldev.
+agreement_response=$(cldev -j agreements create  $SRCROOT/integration/agreement.json)

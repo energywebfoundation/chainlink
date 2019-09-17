@@ -8,10 +8,10 @@ import (
 // Migrate amends the encumbrances table to include the aggregator contact details
 func Migrate(tx *gorm.DB) error {
 	if err := tx.Exec(
-		`ALTER TABLE encumbrances
-         ADD COLUMN "aggregator"             VARCHAR(40) NOT NULL
-                    "AggInitiateJobSelector" BLOB NOT NULL
-                    "AggFulfillSelector"     BLOB NOT NULL`).Error; err != nil {
+		`ALTER TABLE encumbrances ADD COLUMN "aggregator"             VARCHAR(40);
+     ALTER TABLE encumbrances ADD COLUMN "agg_initiate_job_selector" BLOB;
+     ALTER TABLE encumbrances ADD COLUMN "agg_fulfill_selector"     BLOB;`,
+	).Error; err != nil {
 		return errors.Wrap(err, "failed to automigrate encumbrances to include aggregator info")
 	}
 	return nil
