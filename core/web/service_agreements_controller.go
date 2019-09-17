@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,6 +35,7 @@ func (sac *ServiceAgreementsController) Create(c *gin.Context) {
 
 	sa, err := sac.App.GetStore().FindServiceAgreement(us.ID.String())
 	if errors.Cause(err) == orm.ErrorNotFound {
+		fmt.Println("######################################################################## Building SA")
 		sa, err = models.BuildServiceAgreement(us, sac.App.GetStore().KeyStore)
 		if err != nil {
 			jsonAPIError(c, http.StatusUnprocessableEntity, err)
@@ -46,6 +48,7 @@ func (sac *ServiceAgreementsController) Create(c *gin.Context) {
 			return
 		}
 	}
+	fmt.Printf("Create ServiceAgreement %+v\n", sa)
 	jsonAPIResponse(c, sa, "service agreement")
 }
 
