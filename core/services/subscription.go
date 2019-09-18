@@ -69,7 +69,7 @@ func (js JobSubscription) Unsubscribe() {
 type InitiatorSubscription struct {
 	*ManagedSubscription
 	jobManager JobManager
-	Job        models.JobSpec
+	JobSpecID  models.ID
 	Initiator  models.Initiator
 	store      *strpkg.Store
 	callback   func(*strpkg.Store, JobManager, models.LogRequest)
@@ -91,7 +91,7 @@ func NewInitiatorSubscription(
 	}
 
 	sub := InitiatorSubscription{
-		Job:        job,
+		JobSpecID:  *job.ID,
 		jobManager: jobManager,
 		Initiator:  initr,
 		store:      store,
@@ -109,11 +109,11 @@ func NewInitiatorSubscription(
 }
 
 func (sub InitiatorSubscription) dispatchLog(log models.Log) {
-	logger.Debugw(fmt.Sprintf("Log for %v initiator for job %v", sub.Initiator.Type, sub.Job.ID),
-		"txHash", log.TxHash.Hex(), "logIndex", log.Index, "blockNumber", log.BlockNumber, "job", sub.Job.ID)
+	logger.Debugw(fmt.Sprintf("Log for %v initiator for job %v", sub.Initiator.Type, sub.JobSpecID),
+		"txHash", log.TxHash.Hex(), "logIndex", log.Index, "blockNumber", log.BlockNumber, "job", sub.JobSpecID)
 
 	base := models.InitiatorLogEvent{
-		JobSpec:   sub.Job,
+		JobSpecID: sub.JobSpecID,
 		Initiator: sub.Initiator,
 		Log:       log,
 	}
@@ -138,7 +138,7 @@ func ReceiveLogRequest(store *strpkg.Store, jobManager JobManager, le models.Log
 	}
 
 	if le.GetLog().Removed {
-		logger.Debugw("Skipping run for removed log", "log", le.GetLog(), "jobId", le.GetJobSpec().ID)
+		logger.Debugw("Skipping run for removed log", "log", le.GetLog(), "jobId", le.GetJobSpecID())
 		return
 	}
 
@@ -164,9 +164,9 @@ func runJob(store *strpkg.Store, jobManager JobManager, le models.LogRequest, da
 		logger.Errorw(err.Error(), le.ForLogger()...)
 	}
 
-	job := le.GetJobSpec()
-	initr := le.GetInitiator()
-	_, err = jobManager.ExecuteJobWithRunRequest(&job, &initr, &input, le.BlockNumber(), &rr)
+	jobSpecID := le.GetJobSpecID()
+	initiator := le.GetInitiator()
+	_, err = jobManager.ExecuteJobWithRunRequest(jobSpecID, &initiator, &input, le.BlockNumber(), &rr)
 	if err != nil {
 		logger.Errorw(err.Error(), le.ForLogger()...)
 	}

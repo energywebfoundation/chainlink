@@ -117,7 +117,7 @@ func newInitiatorFilterQuery(
 // i.e. EthLogEvent, RunLogEvent, ServiceAgreementLogEvent, OracleLogEvent
 type LogRequest interface {
 	GetLog() Log
-	GetJobSpec() JobSpec
+	GetJobSpecID() *ID
 	GetInitiator() Initiator
 
 	Validate() bool
@@ -132,8 +132,8 @@ type LogRequest interface {
 // InitiatorLogEvent encapsulates all information as a result of a received log from an
 // InitiatorSubscription.
 type InitiatorLogEvent struct {
+	JobSpecID ID
 	Log       Log
-	JobSpec   JobSpec
 	Initiator Initiator
 }
 
@@ -157,9 +157,9 @@ func (le InitiatorLogEvent) GetLog() Log {
 	return le.Log
 }
 
-// GetJobSpec returns the associated JobSpec
-func (le InitiatorLogEvent) GetJobSpec() JobSpec {
-	return le.JobSpec
+// GetJobSpecID returns the associated JobSpecID
+func (le InitiatorLogEvent) GetJobSpecID() *ID {
+	return &le.JobSpecID
 }
 
 // GetInitiator returns the initiator.
@@ -171,7 +171,7 @@ func (le InitiatorLogEvent) GetInitiator() Initiator {
 // formatting in logs (trace statements, not ethereum events).
 func (le InitiatorLogEvent) ForLogger(kvs ...interface{}) []interface{} {
 	output := []interface{}{
-		"job", le.JobSpec.ID,
+		"job", le.JobSpecID,
 		"log", le.Log.BlockNumber,
 		"initiator", le.Initiator,
 	}
@@ -185,7 +185,7 @@ func (le InitiatorLogEvent) ForLogger(kvs ...interface{}) []interface{} {
 // ToDebug prints this event via logger.Debug.
 func (le InitiatorLogEvent) ToDebug() {
 	friendlyAddress := utils.LogListeningAddress(le.Initiator.Address)
-	msg := fmt.Sprintf("Received log from block #%v for address %v for job %v", le.Log.BlockNumber, friendlyAddress, le.JobSpec.ID)
+	msg := fmt.Sprintf("Received log from block #%v for address %v for job %v", le.Log.BlockNumber, friendlyAddress, le.JobSpecID)
 	logger.Debugw(msg, le.ForLogger()...)
 }
 
@@ -244,11 +244,11 @@ type RunLogEvent struct {
 // Validate returns whether or not the contained log has a properly encoded
 // job id.
 func (le RunLogEvent) Validate() bool {
-	jobSpecID := le.JobSpec.ID
+	jobSpecID := &le.JobSpecID
 	topic := le.Log.Topics[RequestLogTopicJobID]
 
 	if IDToTopic(jobSpecID) != topic && IDToHexTopic(jobSpecID) != topic {
-		logger.Errorw("Run Log didn't have matching job ID", le.ForLogger("id", le.JobSpec.ID)...)
+		logger.Errorw("Run Log didn't have matching job ID", le.ForLogger("id", le.JobSpecID)...)
 		return false
 	}
 	return true
