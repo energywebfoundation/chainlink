@@ -15,7 +15,7 @@
     "truffle:exec:count-transaction-events": "truffle exec scripts/count_transaction_events.js --network test"
   },
   "dependencies": {
-    "chainlink": "0.6.1"
+    "chainlink": "0.6.5"
   },
   "devDependencies": {
     "@chainlink/eslint-config": "0.0.1",

@@ -163,7 +163,7 @@ deploy_v05_contracts() {
   export LINK_TOKEN_ADDRESS=`seth send --create $LINK_TOKEN_HEX`
 
   title "Deploying Coordinator..."
-  export COORDINATOR_ADDRERSS=`dapp create Coordinator $LINK_TOKEN_ADDRESS`
+  export COORDINATOR_ADDRESS=`dapp create Coordinator $LINK_TOKEN_ADDRESS`
 
   popd >/dev/null
   title "Contract deployment complete."

@@ -6,6 +6,8 @@ import * as abi from 'ethereumjs-abi'
 import BN from 'bn.js'
 import * as util from 'ethereumjs-util'
 
+import { FunctionFragment, ParamType } from 'ethers/utils/abi-coder'
+
 const HEX_BASE = 16
 
 // https://github.com/ethereum/web3.js/issues/1119#issuecomment-394217563
@@ -600,6 +602,115 @@ export const initiateServiceAgreementArgs = ({
     ),
   ]
 }
+
+////////////////////////////////////////////////////////////////////////
+
+interface Signature {
+  v: number
+  r: Uint8Array
+  s: Uint8Array
+}
+
+interface ServiceAgreement {
+  // Corresponds to ServiceAgreement struct in CoordinatorInterface.sol
+  payment: BN // uint256
+  expiration: BN // uint256
+  endAt: BN // uint256
+  oracles: string[] // 0x hex representation of oracle addresses (uint160's)
+  requestDigest: string // 0x hex representation of bytes32
+  aggregator: string // 0x hex representation of aggregator address
+  aggInitiateJobSelector: string // 0x hex representation of aggregator.initiateAggregatorForJob function selector (uint32)
+  aggFulfillSelector: string // function selector for aggregator.fulfill
+  // Information which is useful to carry around with the agreement, but not
+  // part of the solidity struct
+  id: string // ServiceAgreement Id (sAId)
+  oracleSignatures: Signature[]
+}
+
+// ABI specification for the given method on the given contract
+export const getMethod = (
+  contract: any,
+  methodName: string,
+): FunctionFragment => {
+  const methodABIs = contract.abi.filter(
+    ({ name: attrName }: FunctionFragment) => attrName == methodName,
+  )
+  const fqName = `${contract.contractName}.${methodName}: ${methodABIs}`
+  assert.equal(methodABIs.length, 1, `No method ${fqName}, or ambiguous`)
+  return methodABIs[0]
+}
+
+// ABI specification for the given argument of the given contract method
+const getMethodArg = (
+  contract: any,
+  methodName: string,
+  argName: string,
+): ParamType => {
+  const fqName = `${contract.contractName}.${methodName}`
+  const methodABI = getMethod(contract, methodName)
+  let eMsg = `${fqName} is not a method: ${methodABI}`
+  assert.equal(methodABI.type, 'function', eMsg)
+  const argMatches = methodABI.inputs.filter((a: any) => a.name == argName)
+  eMsg = `${fqName} has no argument ${argName}, or name is ambiguous`
+  assert.equal(argMatches.length, 1, eMsg)
+  return argMatches[0]
+}
+
+// Struct as mapping => tuple representation of struct, for use in truffle call
+//
+// TODO(alx): This does not deal with nested structs. It may be possible to do
+// that by making an AbiCoder with a custom CoerceFunc which, given a tuple
+// type, checks whether the input value is a map or a sequence, and if a map,
+// converts it to a sequence as I'm doing here.
+export const structAsTuple = (
+  struct: { [fieldName: string]: any },
+  contract: any,
+  methodName: string,
+  argName: string,
+): { abi: ParamType; struct: ArrayLike<any> } => {
+  const abi: ParamType = getMethodArg(contract, methodName, argName)
+  const eMsg =
+    `${contract.contractName}.${methodName}'s argument ${argName} ` +
+    `is not a struct: ${abi}`
+  assert.equal(abi.type, 'tuple', eMsg)
+  return { abi, struct: (abi as any).components.map((a: any) => struct[a.name]) }
+}
+
+export const initiateServiceAgreementArgs2 = (
+  coordinator: any,
+  serviceAgreement: ServiceAgreement,
+): any[] => {
+  const signatures = {
+    vs: serviceAgreement.oracleSignatures.map(os => os.v),
+    rs: serviceAgreement.oracleSignatures.map(os => os.r),
+    ss: serviceAgreement.oracleSignatures.map(os => os.s),
+  }
+  const tup = (s: any, n: any) =>
+    structAsTuple(s, coordinator, 'initiateServiceAgreement', n).struct
+  return [tup(serviceAgreement, '_agreement'), tup(signatures, '_signatures')]
+}
+
+// Call coordinator contract to initiate the specified service agreement, and
+// get the return value
+export const initiateServiceAgreementCall2 = async (
+  coordinator: any,
+  serviceAgreement: ServiceAgreement,
+) =>
+  await coordinator.initiateServiceAgreement.call(
+    ...initiateServiceAgreementArgs2(coordinator, serviceAgreement),
+  )
+
+
+/** Call coordinator contract to initiate the specified service agreement. */
+export const initiateServiceAgreement2 = async (
+  coordinator: any,
+  serviceAgreement: ServiceAgreement,
+) =>
+  coordinator.initiateServiceAgreement(
+    ...initiateServiceAgreementArgs2(coordinator, serviceAgreement),
+  )
+
+////////////////////////////////////////////////////////////////////////
 
 // Call coordinator contract to initiate the specified service agreement, and
 // get the return value
