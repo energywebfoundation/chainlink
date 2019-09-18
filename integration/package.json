@@ -36,7 +36,8 @@
     "puppeteer": "^1.20.0",
     "request-promise": "^4.2.4",
     "solc": "0.4.24",
-    "truffle": "^5.0.25"
+    "truffle": "^5.0.25",
+    "web3": "^1.0.0"
   },
   "prettier": "@chainlink/prettier-config"
 }

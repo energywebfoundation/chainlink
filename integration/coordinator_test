@@ -11,7 +11,8 @@ fi
 
 sa_spec_path=$SRCROOT/integration/agreement.json
 initial_spec=$(cat $sa_spec_path)
-agreement_response=$(chainlink -j agreements create $sa_spec_path)
+# FIXME use chainlink instead of cldev
+agreement_response=$(cldev -j agreements create $sa_spec_path)
 
 function check_sa_output() {
     cl_output=$(echo "$agreement_response" | jq .$1)
@@ -28,3 +29,4 @@ check_sa_output encumbrance.aggregator             aggregator
 check_sa_output encumbrance.aggInitiateJobSelector aggInitiateJobSelector
 check_sa_output encumbrance.aggFulfillSelector     aggFulfillSelector
 
+yarn workspace @chainlink/integration truffle exec scripts/initiate_service_agreement.js --network test
