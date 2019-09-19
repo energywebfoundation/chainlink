@@ -604,6 +604,52 @@ export const initiateServiceAgreementArgs = ({
 }
 
 ////////////////////////////////////////////////////////////////////////
+// XXX: Copied from v0.5 helpers.ts
+
+export const concatUint8Arrays = (...arrays: Uint8Array[]): Uint8Array =>
+  Uint8Array.from(Buffer.concat(arrays.map(Buffer.from)))
+
+export const BNtoUint8Array = (n: BN): Uint8Array =>
+  Uint8Array.from(new BN(n).toArray('be', 32))
+
+export function pad0xHexTo256Bit(s: string): string {
+  return Ox(padHexTo256Bit(strip0x(s)))
+}
+
+const hexRegExp = /^(0[xX])?[0-9a-fA-F]+$/
+const isHex = hexRegExp.test.bind(hexRegExp)
+
+export const newUint8ArrayFromHex = (
+  str: string,
+  count: number,
+): Uint8Array => {
+  assert(isHex(str), `${str} is not a hexadecimal value`)
+  const hexCount = 2 * count + 2
+  const hexStr = Ox(str)
+  assert(hexStr.length <= hexCount, `${str} won't fit in ${count} bytes`)
+  return Uint8Array.from(web3.utils.hexToBytes(hexStr.padEnd(hexCount, '0')))
+}
+
+export const newSelector = (str: string): Uint8Array =>
+  newUint8ArrayFromHex(str, 4)
+
+export const calculateSAID2 = (sa: any): any => {
+  const serviceAgreementIDInput = concatUint8Arrays(
+    BNtoUint8Array(sa.payment),
+    BNtoUint8Array(sa.expiration),
+    BNtoUint8Array(sa.endAt),
+    // Each address in this list is padded to a uint256, despite being a uint160
+    ...sa.oracles.map(pad0xHexTo256Bit).map(newHash),
+    newHash(sa.requestDigest),
+    newAddress(sa.aggregator),
+    newSelector(sa.aggInitiateJobSelector),
+    newSelector(sa.aggFulfillSelector),
+  )
+  const serviceAgreementIDInputDigest = util.keccak(
+    toHex(serviceAgreementIDInput),
+  )
+  return newHash(toHex(serviceAgreementIDInputDigest))
+}
 
 interface Signature {
   v: number
