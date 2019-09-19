@@ -1,6 +1,6 @@
 import React from 'react'
 import { Logo } from '../Logo'
-import src from './icon-logo-blue.svg'
+// import src from './icon-logo-blue.svg'
 
 interface Props {
   width?: number
@@ -8,8 +8,8 @@ interface Props {
   alt?: string
 }
 
-const Hexagon = (props: Props) => {
-  return <Logo src={src} {...props} />
+export const HexagonLogo = (props: Props) => {
+  // TODO: Get src working as an export via TS
+  // return <Logo src={src} {...props} />
+  return <Logo src={'/'} {...props} />
 }
-
-export default Hexagon

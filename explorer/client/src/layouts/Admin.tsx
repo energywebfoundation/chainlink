@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { RouteComponentProps } from '@reach/router'
 import {
   createStyles,
   Theme,
@@ -18,9 +19,8 @@ const styles = (theme: Theme) =>
     },
   })
 
-interface Props extends WithStyles<typeof styles> {
+interface Props extends RouteComponentProps, WithStyles<typeof styles> {
   children?: any
-  path: string
 }
 
 export const Admin = ({ children, classes }: Props) => {

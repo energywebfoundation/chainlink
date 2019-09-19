@@ -1,26 +1,24 @@
 import React from 'react'
+import { RouteComponentProps } from '@reach/router'
 import {
   createStyles,
-  Theme,
+  // Theme,
   withStyles,
   WithStyles,
 } from '@material-ui/core/styles'
-import SignInForm from '@chainlink/styleguide/Forms/SignIn'
+// import { SignInForm } from '@chainlink/styleguide'
 
-const styles = (_theme: Theme) => createStyles({})
+const styles = () => createStyles({})
 
-interface Props extends WithStyles<typeof styles> {
-  path: string
-}
+interface Props extends RouteComponentProps, WithStyles<typeof styles> {}
 
-export const Admin = (_props: Props) => {
+/* eslint-disable-next-line no-empty-pattern */
+export const Admin = ({  }: Props) => {
   return (
     <div>
       <h1>Admin</h1>
 
-      <SignInForm
-        onSubmit={() => console.log('SIGN IN SUBMIT!!!')}
-      ></SignInForm>
+      <div>USE SIGN IN FORM HERE!!!!</div>
     </div>
   )
 }

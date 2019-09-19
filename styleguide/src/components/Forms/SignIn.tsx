@@ -10,7 +10,7 @@ import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import Typography from '@material-ui/core/Typography'
 // import TextField from '@material-ui/core/TextField'
-import HexagonLogo from '../Logos/Hexagon'
+import { HexagonLogo } from '../Logos/Hexagon'
 
 const styles = ({ spacing, palette }: Theme) =>
   createStyles({
@@ -43,7 +43,7 @@ interface Props extends WithStyles<typeof styles> {
 
 // TODO: ERRORS
 // TODO: TEXT FIELDS
-export const SignIn = withStyles(styles)(({ classes, onSubmit }: Props) => {
+export const SignInForm = withStyles(styles)(({ classes, onSubmit }: Props) => {
   return (
     <Grid
       container
@@ -76,4 +76,4 @@ export const SignIn = withStyles(styles)(({ classes, onSubmit }: Props) => {
   )
 })
 
-export default SignIn
+export default SignInForm
