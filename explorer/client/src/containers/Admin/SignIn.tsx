@@ -6,7 +6,7 @@ import {
   withStyles,
   WithStyles,
 } from '@material-ui/core/styles'
-// import { SignInForm } from '@chainlink/styleguide'
+import { SignInForm } from '@chainlink/styleguide'
 
 const styles = () => createStyles({})
 
@@ -19,6 +19,7 @@ export const Admin = ({  }: Props) => {
       <h1>Admin</h1>
 
       <div>USE SIGN IN FORM HERE!!!!</div>
+      <SignInForm onSubmit={() => console.log('submit')} />
     </div>
   )
 }
