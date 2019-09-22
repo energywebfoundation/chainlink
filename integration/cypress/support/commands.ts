@@ -29,7 +29,7 @@ Cypress.Commands.add('refreshUntilFound', (selector, options = {}) => {
     throw `Unable to find ${selector} on page`
   }
   options.maxAttempts--
-  let $element = Cypress.$(selector)
+  const $element = Cypress.$(selector)
   if ($element.length > 0) {
     cy.wrap($element)
   } else {
